@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
+from langgraph.checkpoint.memory import MemorySaver
 from typing import List, TypedDict
 from langgraph.graph import StateGraph, END
 from langchain.prompts import PromptTemplate
@@ -11,6 +12,8 @@ class State(TypedDict):
     classification: str 
     entities: List[str] 
     summary: str
+
+memory = MemorySaver()
 
 llm = ChatOpenAI(model = 'gpt-4o-mini', temperature = 0)
 
