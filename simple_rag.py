@@ -43,7 +43,7 @@ def cosine_similarity(vec1, vec2):
 def semantic_search(query, text_chunks, embeddings, k = 5):
     embedded_query = create_embeddings(query).data[0].embedding
     semantic_search = []
-
+    #Trying using cycles for search 
     for i, chunk in enumerate(embeddings):
         similarity = cosine_similarity(np.array(embedded_query), np.array(chunk))
         semantic_search.append(i, similarity)
