@@ -11,7 +11,11 @@ from langchain_community.utilities.sql_database import SQLDatabase
 import ast
 from database_sql import create_my_db
 from langgraph.graph import StateGraph, START, END
+from langgraph.prebuilt import create_react_agent
+from subagent import invoice_subagent_prompt, invoice_tools
 from nodes import music_assistant, music_tool_node, should_continue
+from langgraph_supervisor import create_supervisor
+from supervisor import supervisor_prompt
 from tools import music_tools
 
 load_dotenv(dotenv_path = ".env", override = True)
@@ -48,3 +52,23 @@ music_workflow.add_conditional_edges(
 music_workflow.add_edge("music_tool_node", "music_assistant")
 
 music_catalog_subagent = music_workflow.compile(name="music_catalog_subagent", checkpointer=checkpointer, store = in_memory_store)
+
+invoice_information_subagent = create_react_agent(
+    llm,
+    tools = invoice_tools,
+    prompt = invoice_subagent_prompt,
+    name = "invoice_information_subagent",
+    state_schema = State,
+    checkpointer = checkpointer,
+    store = in_memory_store
+)
+
+supervisor_prebuilt_workflow = create_supervisor(
+    agents = [invoice_information_subagent, music_catalog_subagent],
+    model = llm,
+    prompt = (supervisor_prompt),
+    output_mode = "last_message",
+    state_schema = State
+)
+
+supervisor_prebuilt = supervisor_prebuilt_workflow.compile(name = "music_catalog_subagent", checkpointer = checkpointer, store = in_memory_store)
