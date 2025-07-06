@@ -10,6 +10,8 @@ from langchain_core.tools import tool
 from langchain_community.utilities.sql_database import SQLDatabase
 import ast
 from database_sql import create_my_db
+from langgraph.graph import StateGraph, START, END
+from nodes import music_assistant, music_tool_node, should_continue
 from tools import music_tools
 
 load_dotenv(dotenv_path = ".env", override = True)
@@ -29,3 +31,18 @@ my_engine = create_my_db()
 db = SQLDatabase(my_engine)
 
 llm_with_music_tools = llm.bind_tools(music_tools)
+music_workflow = StateGraph(State)
+music_workflow.add_node("music_assistant", music_assistant)
+music_workflow.add_node("music_tool_node", music_tool_node)
+
+music_workflow.add_edge(START, "music_assistant")
+music_workflow.add_conditional_edges(
+    "music_assistant",
+    should_continue,
+    {
+        "continue": music_tool_node,
+        "end": END
+    }
+)
+
+music_workflow.add_edge("music_tool_node", "music_assistant")
