@@ -46,3 +46,5 @@ music_workflow.add_conditional_edges(
 )
 
 music_workflow.add_edge("music_tool_node", "music_assistant")
+
+music_catalog_subagent = music_workflow.compile(name="music_catalog_subagent", checkpointer=checkpointer, store = in_memory_store)
