@@ -15,6 +15,7 @@ from langgraph.prebuilt import create_react_agent
 from subagent import invoice_subagent_prompt, invoice_tools
 from nodes import music_assistant, music_tool_node, should_continue
 from langgraph_supervisor import create_supervisor
+from human_in_the_loop import verify_info, should_interrupt, human_input
 from supervisor import supervisor_prompt
 from tools import music_tools
 
@@ -72,3 +73,25 @@ supervisor_prebuilt_workflow = create_supervisor(
 )
 
 supervisor_prebuilt = supervisor_prebuilt_workflow.compile(name = "music_catalog_subagent", checkpointer = checkpointer, store = in_memory_store)
+
+multi_agent_verify = StateGraph(State)
+
+multi_agent_verify.add_node("verify_info", verify_info)
+multi_agent_verify.add_node("human_input", human_input)
+multi_agent_verify.add_node("supervisor", supervisor_prebuilt)
+
+multi_agent_verify.add_edge(START, "verify_info")
+
+multi_agent_verify.add_conditional_edges(
+    "verify_info",
+    should_interrupt,
+    {
+        "continue": "supervisor",
+        "interrupt": "human_input"
+    }
+)
+
+multi_agent_verify.add_edge("human_input", "verify_info")
+multi_agent_verify.add_edge("supervisior", END)
+multi_agent_verify_graph = multi_agent_verify.compile(name = "multi_agent_verify", checkpointer = checkpointer, store = in_memory_store)
+
